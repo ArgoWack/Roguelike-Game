@@ -1,6 +1,6 @@
 ﻿using ASP_NET_WEEK3_Homework_Roguelike.Services;
 using ASP_NET_WEEK3_Homework_Roguelike.View;
-
+using ASP_NET_WEEK3_Homework_Roguelike.Shared;
 namespace ASP_NET_WEEK3_Homework_Roguelike.Model.Events
 {
     public static class EventGenerator
@@ -20,11 +20,11 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model.Events
         public static RandomEvent GenerateEvent()
         {
             int roll = random.Next(100);
-            if (roll < 25)
+            if (roll < Constants.chanceForFindItemEvent)
                 return new FindItemEvent(_eventService, _interactionService, _playerCharacterView);
-            else if (roll < 75)
+            else if (roll < Constants.chanceForMonsterEvent)
                 return new MonsterEvent(_eventService, _interactionService, _playerCharacterView);
-            else if (roll < 85)
+            else if (roll < Constants.chanceForDialogEvent)
                 return new DialogEvent(_eventService, _interactionService, _playerCharacterView);
             else
                 return null; // no event occurs

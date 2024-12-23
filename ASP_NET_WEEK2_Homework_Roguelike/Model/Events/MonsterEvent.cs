@@ -1,6 +1,7 @@
 ﻿using ASP_NET_WEEK3_Homework_Roguelike.Services;
 using ASP_NET_WEEK3_Homework_Roguelike.Controller;
 using ASP_NET_WEEK3_Homework_Roguelike.View;
+using ASP_NET_WEEK3_Homework_Roguelike.Shared;
 
 namespace ASP_NET_WEEK3_Homework_Roguelike.Model.Events
 {
@@ -94,7 +95,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model.Events
         }
         private void RewardPlayer(PlayerCharacter player, Monster monster)
         {
-            int experienceGained = monster.Level * 100;
+            int experienceGained = monster.Level * Constants.experiencePerLevelMultiplier;
             player.GetExperience(experienceGained);
             _eventService.HandleEventOutcome($"You gained {experienceGained} experience!");
             if (random.NextDouble() < 0.5)
@@ -110,7 +111,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model.Events
                     _eventService.HandleEventOutcome("The monster dropped nothing of value.");
                 }
             }
-            int moneyDropped = monster.Level * 10;
+            int moneyDropped = monster.Level * Constants.moneyDropPerMonestLevelMultiplier;
             player.Money += moneyDropped;
             _eventService.HandleEventOutcome($"You found {moneyDropped} coins on the {monster.Name}.");
         }

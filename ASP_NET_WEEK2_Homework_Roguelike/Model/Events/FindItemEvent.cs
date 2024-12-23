@@ -1,6 +1,7 @@
 ﻿using ASP_NET_WEEK3_Homework_Roguelike.Services;
 using ASP_NET_WEEK3_Homework_Roguelike.Controller;
 using ASP_NET_WEEK3_Homework_Roguelike.View;
+using ASP_NET_WEEK3_Homework_Roguelike.Shared;
 
 namespace ASP_NET_WEEK3_Homework_Roguelike.Model.Events
 {
@@ -22,9 +23,9 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model.Events
 
             try
             {
-                if (new Random().Next(100) < 34) // 34% chance to find health potions
+                if (new Random().Next(100) < Constants.chanceForReceiveHealthPotion) // 34% chance to find health potions
                 {
-                    int potionCount = new Random().Next(1, 5);
+                    int potionCount = new Random().Next(Constants.lowestAmountOfHealthPotionsObtainable, Constants.highestAmountOfHealthPotionsObtainable);
                     player.ReceiveHealthPotion(potionCount);
                     _eventService.HandleEventOutcome($"You have found {potionCount} Health Potions.");
                 }

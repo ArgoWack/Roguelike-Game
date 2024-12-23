@@ -1,5 +1,6 @@
 ﻿using ASP_NET_WEEK3_Homework_Roguelike.Model.Items;
 using ASP_NET_WEEK3_Homework_Roguelike.View;
+using ASP_NET_WEEK3_Homework_Roguelike.Shared;
 
 namespace ASP_NET_WEEK3_Homework_Roguelike.Services
 {
@@ -103,7 +104,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Services
         }
         private static int GenerateRandomStat(int baseValue, out double percentage)
         {
-            var variation = baseValue * 0.25;
+            var variation = baseValue * Constants.variationPercentageforItemStats;
             var offset = (_random.NextDouble() * 2 - 1) * variation;
             percentage = offset / baseValue;
             return baseValue + (int)offset;
@@ -115,6 +116,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Services
         }
         public static ItemQuality GetQuality(double percentage)
         {
+            // calibrated for variationPercentageforItemStats (const int) in GlobalConstants
             if (percentage <= -0.20) return ItemQuality.Shitty;
             if (percentage <= -0.10) return ItemQuality.Damaged;
             if (percentage <= -0.05) return ItemQuality.Cracked;

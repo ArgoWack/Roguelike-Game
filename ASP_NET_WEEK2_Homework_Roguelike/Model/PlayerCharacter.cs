@@ -1,6 +1,7 @@
 ﻿using ASP_NET_WEEK3_Homework_Roguelike.Services;
 using ASP_NET_WEEK3_Homework_Roguelike.Model.Items;
 using ASP_NET_WEEK3_Homework_Roguelike.View;
+using ASP_NET_WEEK3_Homework_Roguelike.Shared;
 
 namespace ASP_NET_WEEK3_Homework_Roguelike.Model
 {
@@ -69,12 +70,12 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
             EquippedItems ??= new Dictionary<ItemType, Item>();
         }
         // Derived Stats
-        public int HealthLimit => 100 + Level * 10;
+        public int HealthLimit => Constants.baseHealth + Level * Constants.healthPerLevelMultiplier;
         public float Speed
         {
             get
             {
-                float weightPenalty = Math.Max(0.5f, 1.0f - (Weight / 100.0f)); // Minimum speed penalty of 50%
+                float weightPenalty = Math.Max(Constants.minimumSpeedPenalty, Constants.maximumSpeedPenalty - (Weight / Constants.weightPenalityDivider)); // Minimum speed penalty of 50%
                 return _baseSpeed * weightPenalty;
             }
         }
@@ -82,14 +83,14 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
         {
             get
             {
-                return _baseAttack * (Speed / 10.0f); // Scale attack by speed
+                return _baseAttack * (Speed / Constants.speedEffectDivider); // Scale attack by speed
             }
         }
         public float Defense
         {
             get
             {
-                return _baseDefense * (Speed / 10.0f); // Scale defense by speed
+                return _baseDefense * (Speed / Constants.speedEffectDivider); // Scale defense by speed
             }
         }
         public PlayerCharacter(CharacterStatsService statsService, InventoryService inventoryService, EventService eventService, PlayerCharacterView view)
@@ -107,7 +108,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
             _currentY = 0;
             CurrentMap = new Map();
 
-            _baseSpeed = Level * 10;
+            _baseSpeed = Level * Constants.speedPerLevelMultiplier;
             UpdateStats();
         }
         //For deserialization
@@ -137,12 +138,12 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
                 return;
             }
 
-            float weightPenalty = Math.Max(0.5f, 1.0f - (Weight / 100.0f)); // minimum 50% speed
-            _baseSpeed = 10.0f + Level * 2;
+            float weightPenalty = Math.Max(Constants.minimumSpeedPenalty, Constants.maximumSpeedPenalty - (Weight / Constants.weightPenalityDivider)); // minimum 50% speed
+            _baseSpeed = Level * Constants.speedPerLevelMultiplier;
             float adjustedSpeed = (_baseSpeed + _speedModifier) * weightPenalty;
 
-            _baseAttack = (_statsService.CalculateAttack(this) + _attackModifier) * (adjustedSpeed / 10.0f);
-            _baseDefense = (_statsService.CalculateDefense(this) + _defenseModifier) * (adjustedSpeed / 10.0f);
+            _baseAttack = (_statsService.CalculateAttack(this) + _attackModifier) * (adjustedSpeed / Constants.speedEffectDivider);
+            _baseDefense = (_statsService.CalculateDefense(this) + _defenseModifier) * (adjustedSpeed / Constants.speedEffectDivider);
             Weight = _statsService.CalculateWeight(this);
         }
 
@@ -226,9 +227,9 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
         public void GetExperience(int amount)
         {
             Experience += amount;
-            while (Experience >= Level * 100)
+            while (Experience >= Level * Constants.experiencePerLevelMultiplier)
             {
-                Experience -= Level * 100;
+                Experience -= Level * Constants.experiencePerLevelMultiplier;
                 Level++;
                 Health = HealthLimit;
                 UpdateStats();
@@ -278,9 +279,9 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
         }
         public void BuyHealthPotion()
         {
-            if (Money < 40)
+            if (Money < Constants.healthPotionValue)
                 throw new InvalidOperationException("You don't have enough money to buy a health potion.");
-            Money -= 40;
+            Money -= Constants.healthPotionValue;
             ReceiveHealthPotion();
             UpdateStats();
         }
