@@ -12,15 +12,13 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
             Console.WriteLine("PlayerCharacter constructor called.");
             Inventory = new List<Item>();
             EquippedItems = new Dictionary<ItemType, Item>();
+            Coordinates = new Point(0, 0);
         }
 
         private CharacterStatsService _statsService;
         private InventoryService _inventoryService;
         private EventService _eventService;
         private PlayerCharacterView _view;
-
-        private int _currentX;
-        private int _currentY;
 
         private float _baseSpeed;
         private float _baseAttack;
@@ -44,16 +42,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
         public int Level { get; set; }
         public int Experience { get; set; }
         public Map CurrentMap { get; set; }
-        public int CurrentX
-        {
-            get => _currentX;
-            set => _currentX = value;
-        }
-        public int CurrentY
-        {
-            get => _currentY;
-            set => _currentY = value;
-        }
+        public Point Coordinates { get; set; }
         public List<Item> Inventory
         {
             get => _inventory;
@@ -104,19 +93,14 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
             Level = 1;
             Health = HealthLimit;
             Money = 0;
-            _currentX = 0;
-            _currentY = 0;
+            Coordinates = new Point(0, 0);
             CurrentMap = new Map();
 
             _baseSpeed = Level * Constants.speedPerLevelMultiplier;
             UpdateStats();
         }
         //For deserialization
-        public void InitializeServices(
-            CharacterStatsService statsService,
-            InventoryService inventoryService,
-            EventService eventService,
-            PlayerCharacterView view)
+        public void InitializeServices(CharacterStatsService statsService,InventoryService inventoryService,EventService eventService,PlayerCharacterView view)
         {
             _statsService = statsService ?? throw new ArgumentNullException(nameof(statsService));
             _inventoryService = inventoryService ?? throw new ArgumentNullException(nameof(inventoryService));
@@ -242,13 +226,11 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Model
             _speedModifier = Math.Max(0, _speedModifier + amount);
             UpdateStats();
         }
-
         public void ModifyAttack(float amount)
         {
             _attackModifier = Math.Max(0, _attackModifier + amount);
             UpdateStats();
         }
-
         public void ModifyDefense(float amount)
         {
             _defenseModifier = Math.Max(0, _defenseModifier + amount);

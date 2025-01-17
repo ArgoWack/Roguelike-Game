@@ -104,7 +104,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Services
             ConsoleKeyInfo operation;
             do
             {
-                operation = _gameView.DisplayMenuAndGetChoice<char>("InGameMenu", "\nWhat would you like to do: a/w/s/d/e/q? \n", _menuActionService);
+                operation = _gameView.DisplayMenuAndGetChoice<char>("InGameMenu", "\nWhat would you like to do: a/w/s/d/e/q/m/p? \n", _menuActionService);
                 switch (operation.KeyChar)
                 {
                     case 'a':
@@ -143,8 +143,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Services
             _playerCharacter.Name = _gameView.PromptForCharacterName();
             ReadKey();
             _mapService.InitializeStartingRoom(_map);
-            _playerCharacter.CurrentX = 0;
-            _playerCharacter.CurrentY = 0;
+            _playerCharacter.Coordinates = new Point(0, 0);
             SaveGame();
             _inGame = true;
         }
@@ -213,7 +212,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Services
             try
             {
                 _playerController.MovePlayer(direction);
-                var currentRoom = _mapService.GetDiscoveredRoom(_map, _playerCharacter.CurrentX, _playerCharacter.CurrentY);
+                var currentRoom = _mapService.GetDiscoveredRoom(_map, _playerCharacter.Coordinates);
                 if (currentRoom != null)
                 {
                     // skips the "no new events" message if the event status was just handled
@@ -290,14 +289,14 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Services
             actionService.AddNewAction(3, "Game description", "Main");
             actionService.AddNewAction(4, "Quit game", "Main");
 
-            actionService.AddNewAction('q', "Save and quit to main menu", "InGameMenu");
-            actionService.AddNewAction('p', "Show player statistics", "InGameMenu");
-            actionService.AddNewAction('e', "Open inventory", "InGameMenu");
             actionService.AddNewAction('a', "Move left", "InGameMenu");
             actionService.AddNewAction('w', "Move forward", "InGameMenu");
             actionService.AddNewAction('s', "Move backward", "InGameMenu");
             actionService.AddNewAction('d', "Move right", "InGameMenu");
+            actionService.AddNewAction('e', "Open inventory", "InGameMenu");
+            actionService.AddNewAction('q', "Save and quit to main menu", "InGameMenu");
             actionService.AddNewAction('m', "Show map", "InGameMenu");
+            actionService.AddNewAction('p', "Show player statistics", "InGameMenu");
 
             actionService.AddNewAction('e', "Use an item", "InventoryMenu");
             actionService.AddNewAction('d', "Discard an item", "InventoryMenu");

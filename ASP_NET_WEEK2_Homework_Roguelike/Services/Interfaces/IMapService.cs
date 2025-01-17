@@ -6,8 +6,8 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Services
     {
         void InitializeStartingRoom(Map map);
         void AddDiscoveredRoom(Map map, Room room);
-        Room GenerateRoom(Map map, int currentX, int currentY, string direction);
-        void MovePlayer(Map map, ref int playerX, ref int playerY, string direction);
-        Room GetDiscoveredRoom(Map map, int x, int y);
+        Room GenerateRoom(Map map, Point currentCoordinates, Direction direction);
+        void MovePlayer(Map map, ref Point playerCoordinates, Direction direction);
+        Room GetDiscoveredRoom(Map map, Point coordinates);
     }
 }

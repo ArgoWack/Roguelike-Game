@@ -2,13 +2,14 @@
 {
     public class Map
     {
-        // stores discovered rooms with their coordinates as keys
-        public Dictionary<(int, int), Room> DiscoveredRooms { get; set; }
-        // stores rooms that are yet to be discovered
+        // Stores discovered rooms with their coordinates as keys
+        public Dictionary<Point, Room> DiscoveredRooms { get; set; }
+
+        // Stores rooms that are yet to be discovered
         public List<RoomToDiscover> RoomsToDiscover { get; set; }
         public Map()
         {
-            DiscoveredRooms = new Dictionary<(int, int), Room>();
+            DiscoveredRooms = new Dictionary<Point, Room>();
             RoomsToDiscover = new List<RoomToDiscover>();
         }
     }

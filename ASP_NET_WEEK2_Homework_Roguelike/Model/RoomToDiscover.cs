@@ -2,18 +2,16 @@
 {
     public class RoomToDiscover
     {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public string EnteringDirection { get; set; }
-        public HashSet<string> BlockedDirections { get; set; }
-        public RoomToDiscover(int x, int y, string enteringDirection)
+        public Point Coordinates { get; set; }
+        public Direction EnteringDirection { get; set; }
+        public HashSet<Direction> BlockedDirections { get; set; }
+        public RoomToDiscover(Point coordinates, Direction enteringDirection)
         {
-            X = x;
-            Y = y;
+            Coordinates = coordinates;
             EnteringDirection = enteringDirection;
-            BlockedDirections = new HashSet<string>();
+            BlockedDirections = new HashSet<Direction>();
         }
-        //for serialization
+        // For serialization
         public RoomToDiscover() { }
     }
 }

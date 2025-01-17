@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
-using ASP_NET_WEEK3_Homework_Roguelike.Converters;
+﻿using ASP_NET_WEEK3_Homework_Roguelike.Converters;
 using ASP_NET_WEEK3_Homework_Roguelike.Model;
-using ASP_NET_WEEK3_Homework_Roguelike.Model.Items;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+
 public class MapConverter : JsonConverter<Map>, IConverter<Map>
 {
     public override Map Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -15,29 +15,25 @@ public class MapConverter : JsonConverter<Map>, IConverter<Map>
             // Deserialize DiscoveredRooms
             if (jsonObject.TryGetProperty("DiscoveredRooms", out var discoveredRoomsProperty))
             {
-                map.DiscoveredRooms = new Dictionary<(int, int), Room>();
+                map.DiscoveredRooms = new Dictionary<Point, Room>();
                 foreach (var roomEntry in discoveredRoomsProperty.EnumerateObject())
                 {
                     var coordinates = roomEntry.Name.Split(',');
-                    var x = int.Parse(coordinates[0]);
-                    var y = int.Parse(coordinates[1]);
+                    if (coordinates.Length != 2)
+                        throw new JsonException("Invalid Point format in DiscoveredRooms key.");
+
+                    if (!int.TryParse(coordinates[0], out var x) || !int.TryParse(coordinates[1], out var y))
+                        throw new JsonException("Failed to parse Point coordinates.");
 
                     var roomElement = roomEntry.Value;
-                    var room = new Room
-                    {
-                        X = roomElement.GetProperty("X").GetInt32(),
-                        Y = roomElement.GetProperty("Y").GetInt32(),
-                        EventStatus = roomElement.GetProperty("EventStatus").GetString(),
-                        IsExplored = roomElement.GetProperty("IsExplored").GetBoolean()
-                    };
 
-                    // Deserialize Exits as a List<string> and convert to Dictionary<string, Room?>
-                    if (roomElement.TryGetProperty("Exits", out var exitsProperty))
-                    {
-                        var exitsList = JsonSerializer.Deserialize<List<string>>(exitsProperty.GetRawText(), options);
-                        room.Exits = exitsList?.ToDictionary(exit => exit, _ => (Room?)null) ?? new Dictionary<string, Room?>();
-                    }
-                    map.DiscoveredRooms[(x, y)] = room;
+                    // Deserialize Room
+                    var room = JsonSerializer.Deserialize<Room>(roomElement.GetRawText(), options);
+                    if (room == null)
+                        throw new JsonException("Failed to deserialize Room.");
+
+                    room.Coordinates = new Point(x, y);
+                    map.DiscoveredRooms[new Point(x, y)] = room;
                 }
             }
             // Deserialize RoomsToDiscover
@@ -63,21 +59,29 @@ public class MapConverter : JsonConverter<Map>, IConverter<Map>
             writer.WriteStartObject();
             foreach (var kvp in value.DiscoveredRooms)
             {
-                var key = $"{kvp.Key.Item1},{kvp.Key.Item2}";
-                writer.WritePropertyName(key);
-
-                writer.WriteStartObject();
+                var point = kvp.Key;
                 var room = kvp.Value;
-
-                writer.WriteNumber("X", room.X);
-                writer.WriteNumber("Y", room.Y);
+                if (room == null)
+                {
+                    throw new Exception($"Room at {point} is null.");
+                }
+                var key = $"{point.X},{point.Y}";
+                writer.WritePropertyName(key);
+                writer.WriteStartObject();
+                writer.WriteNumber("X", room.Coordinates.X);
+                writer.WriteNumber("Y", room.Coordinates.Y);
                 writer.WriteString("EventStatus", room.EventStatus);
                 writer.WriteBoolean("IsExplored", room.IsExplored);
 
-                // Serialize Exits as a List<string>
+                // Serialize Exits
                 writer.WritePropertyName("Exits");
-                JsonSerializer.Serialize(writer, room.Exits.Keys.ToList(), options);
-
+                writer.WriteStartObject();
+                foreach (var exit in room.Exits)
+                {
+                    writer.WritePropertyName(exit.Key.ToString());
+                    writer.WriteNullValue(); // avoids circular references
+                }
+                writer.WriteEndObject();
                 writer.WriteEndObject();
             }
             writer.WriteEndObject();

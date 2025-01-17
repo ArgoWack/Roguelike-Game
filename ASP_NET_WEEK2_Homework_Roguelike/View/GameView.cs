@@ -11,9 +11,11 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
         }
         public void ShowWelcomeMessage()
         {
-            //DisplayMessage("Welcome to Roguelike game \n");
-            ConsoleHelper.PrintColored("Welcome to Roguelike game \n", ConsoleColor.DarkCyan, true);
+            string description = "Welcome to Roguelike game \n\n" +
+                     " Notice: \n" +
+                     "\n Game works by selecting a letter or number by typing it and confirming your choice by pressing enter. Each menu will describe possible options and their corresponding letters/numbers. \n";
 
+            ConsoleHelper.PrintColored(description, ConsoleColor.DarkCyan, true);
         }
         public void ShowDescription()
         {
@@ -110,7 +112,6 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
                     ConsoleHelper.PrintColored($"{(char)action.Id}. {action.Name}", ConsoleColor.DarkYellow, true);
                 }
             }
-
             return ReadKey(true);
         }
         public void ShowEndGameMessage()
@@ -120,7 +121,6 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
         public void ShowMessage(string message)
         {
             DisplayMessage(message);
-
         }
     }
 }

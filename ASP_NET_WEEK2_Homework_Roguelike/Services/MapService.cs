@@ -3,159 +3,116 @@ using ASP_NET_WEEK3_Homework_Roguelike.Model.Events;
 
 namespace ASP_NET_WEEK3_Homework_Roguelike.Services
 {
-    public class MapService: IMapService
+    public class MapService : IMapService
     {
         private readonly EventService _eventService;
         public MapService(EventService eventService)
         {
-            _eventService = eventService;
+            _eventService = eventService ?? throw new ArgumentNullException(nameof(eventService));
         }
         public void InitializeStartingRoom(Map map)
         {
-            Room startingRoom = new Room(0, 0);
+            if (map == null) throw new ArgumentNullException(nameof(map));
 
-            startingRoom.Exits["north"] = null;
-            startingRoom.Exits["south"] = null;
-            startingRoom.Exits["east"] = null;
-            startingRoom.Exits["west"] = null;
-
+            var startingRoom = new Room(new Point(0, 0));
+            foreach (Direction direction in Enum.GetValues(typeof(Direction)))
+            {
+                startingRoom.Exits[direction] = null;
+            }
             AddDiscoveredRoom(map, startingRoom);
         }
         public void AddDiscoveredRoom(Map map, Room room)
         {
-            map.DiscoveredRooms[(room.X, room.Y)] = room;
+            if (map == null) throw new ArgumentNullException(nameof(map));
+            if (room == null) throw new ArgumentNullException(nameof(room));
+
+            map.DiscoveredRooms[room.Coordinates] = room;
             room.IsExplored = true;
 
-            // Logic for exits and room to discover
             foreach (var direction in room.Exits.Keys)
             {
-                (int newX, int newY) = GetCoordinatesInDirection(room.X, room.Y, direction);
-                if (!map.DiscoveredRooms.ContainsKey((newX, newY)))
+                var newCoordinates = room.Coordinates.Move(direction);
+                if (!map.DiscoveredRooms.ContainsKey(newCoordinates))
                 {
-                    RoomToDiscover rtd = new RoomToDiscover(newX, newY, OppositeDirection(direction));
-                    map.RoomsToDiscover.Add(rtd);
-                    rtd.BlockedDirections.Add(OppositeDirection(direction));
+                    var roomToDiscover = new RoomToDiscover(newCoordinates, OppositeDirection(direction));
+                    map.RoomsToDiscover.Add(roomToDiscover);
+                    roomToDiscover.BlockedDirections.Add(OppositeDirection(direction));
                 }
             }
-            map.RoomsToDiscover.RemoveAll(r => r.X == room.X && r.Y == room.Y);
+            map.RoomsToDiscover.RemoveAll(r => r.Coordinates.Equals(room.Coordinates));
         }
-        public Room GenerateRoom(Map map, int currentX, int currentY, string direction)
+        public Room GenerateRoom(Map map, Point currentCoordinates, Direction direction)
         {
-            if (map == null)
-                throw new ArgumentNullException(nameof(map), "Map cannot be null.");
+            if (map == null) throw new ArgumentNullException(nameof(map));
+            if (currentCoordinates == null) throw new ArgumentNullException(nameof(currentCoordinates));
 
-            if (string.IsNullOrWhiteSpace(direction))
-                throw new ArgumentException("Direction cannot be null or empty.", nameof(direction));
+            var newCoordinates = currentCoordinates.Move(direction);
+            var newRoom = new Room(newCoordinates);
 
-            try
+            var randomEvent = EventGenerator.GenerateEvent();
+            newRoom.EventStatus = randomEvent != null ? randomEvent.GetType().Name : "none";
+
+            AddDiscoveredRoom(map, newRoom);
+            GenerateRandomExits(map, newRoom);
+
+            if (map.DiscoveredRooms.TryGetValue(currentCoordinates, out var currentRoom))
             {
-                (int newX, int newY) = GetCoordinatesInDirection(currentX, currentY, direction);
-                Room newRoom = new Room(newX, newY);
-
-                // Handles event generation here
-                RandomEvent randomEvent = EventGenerator.GenerateEvent();
-                newRoom.EventStatus = randomEvent != null ? randomEvent.GetType().Name : "none";
-                AddDiscoveredRoom(map, newRoom);
-                GenerateRandomExits(map, newRoom);
-                Room currentRoom = GetDiscoveredRoom(map, currentX, currentY);
-                if (currentRoom != null)
-                {
-                    currentRoom.Exits[direction] = newRoom;
-                    newRoom.Exits[OppositeDirection(direction)] = currentRoom;
-                }
-                return newRoom;
+                currentRoom.Exits[direction] = newRoom;
+                newRoom.Exits[OppositeDirection(direction)] = currentRoom;
             }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to generate room.", ex);
-            }
+            return newRoom;
         }
-        public void MovePlayer(Map map, ref int playerX, ref int playerY, string direction)
+        public void MovePlayer(Map map, ref Point playerCoordinates, Direction direction)
         {
-            if (map == null)
-                throw new ArgumentNullException(nameof(map), "Map cannot be null.");
+            if (map == null) throw new ArgumentNullException(nameof(map));
+            if (playerCoordinates == null) throw new ArgumentNullException(nameof(playerCoordinates));
 
-            if (string.IsNullOrWhiteSpace(direction))
-                throw new ArgumentException("Direction cannot be null or empty.", nameof(direction));
-
-            var validDirections = new[] { "north", "south", "east", "west" };
-            if (!validDirections.Contains(direction.ToLower()))
+            var newCoordinates = playerCoordinates.Move(direction);
+            if (!map.DiscoveredRooms.ContainsKey(newCoordinates))
             {
-                throw new ArgumentException($"Invalid direction: {direction}. Allowed values are: {string.Join(", ", validDirections)}.");
+                GenerateRoom(map, playerCoordinates, direction);
             }
 
-            try
-            {
-                (int newX, int newY) = GetCoordinatesInDirection(playerX, playerY, direction);
-                Room targetRoom = GetDiscoveredRoom(map, newX, newY);
-                if (targetRoom == null)
-                {
-                    targetRoom = GenerateRoom(map, playerX, playerY, direction);
-                }
-                playerX = newX;
-                playerY = newY;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to move player.", ex);
-            }
+            playerCoordinates = newCoordinates;
         }
-        public Room GetDiscoveredRoom(Map map, int x, int y)
+        public Room GetDiscoveredRoom(Map map, Point coordinates)
         {
-            return map.DiscoveredRooms.TryGetValue((x, y), out Room room) ? room : null;
+            if (map == null) throw new ArgumentNullException(nameof(map));
+            if (coordinates == null) throw new ArgumentNullException(nameof(coordinates));
+
+            return map.DiscoveredRooms.TryGetValue(coordinates, out var room) ? room : null;
         }
         private void GenerateRandomExits(Map map, Room room)
         {
-            if (map == null)
-                throw new ArgumentNullException(nameof(map), "Map cannot be null.");
-            if (room == null)
-                throw new ArgumentNullException(nameof(room), "Room cannot be null.");
-
-            try
+            if (map == null) throw new ArgumentNullException(nameof(map));
+            if (room == null) throw new ArgumentNullException(nameof(room));
+            var directions = Enum.GetValues(typeof(Direction)).Cast<Direction>().ToList();
+            var random = new Random();
+            int numberOfExits = random.Next(2, 5);
+            var availableDirections = directions.OrderBy(_ => random.Next()).Take(numberOfExits).ToList();
+            foreach (var direction in availableDirections)
             {
-                var directions = new[] { "north", "south", "east", "west" };
-                var random = new Random();
-                int numberOfExits = random.Next(2, 5);
-                var availableDirections = directions.OrderBy(_ => random.Next()).Take(numberOfExits).ToList();
-                foreach (var direction in availableDirections)
+                if (!room.Exits.ContainsKey(direction))
                 {
-                    if (!room.Exits.ContainsKey(direction))
+                    var newCoordinates = room.Coordinates.Move(direction);
+                    if (!map.DiscoveredRooms.ContainsKey(newCoordinates))
                     {
-                        (int newX, int newY) = GetCoordinatesInDirection(room.X, room.Y, direction);
-                        if (!map.DiscoveredRooms.ContainsKey((newX, newY)))
-                        {
-                            room.Exits[direction] = null;
-                            RoomToDiscover rtd = new RoomToDiscover(newX, newY, OppositeDirection(direction));
-                            map.RoomsToDiscover.Add(rtd);
-                        }
+                        room.Exits[direction] = null;
+                        var roomToDiscover = new RoomToDiscover(newCoordinates, OppositeDirection(direction));
+                        map.RoomsToDiscover.Add(roomToDiscover);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to generate random exits for room.", ex);
-            }
         }
-        private (int, int) GetCoordinatesInDirection(int x, int y, string direction)
+        private Direction OppositeDirection(Direction direction)
         {
             return direction switch
             {
-                "north" => (x, y + 1),
-                "south" => (x, y - 1),
-                "east" => (x + 1, y),
-                "west" => (x - 1, y),
-                _ => (x, y)
-            };
-        }
-        private string OppositeDirection(string direction)
-        {
-            return direction switch
-            {
-                "north" => "south",
-                "south" => "north",
-                "east" => "west",
-                "west" => "east",
-                _ => ""
+                Direction.North => Direction.South,
+                Direction.South => Direction.North,
+                Direction.East => Direction.West,
+                Direction.West => Direction.East,
+                _ => throw new InvalidOperationException($"Invalid direction: {direction}")
             };
         }
     }

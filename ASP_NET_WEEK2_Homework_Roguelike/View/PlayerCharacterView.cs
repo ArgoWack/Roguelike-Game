@@ -8,18 +8,21 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
     {
         public void ShowMap(Map map, PlayerCharacter player)
         {
-            var minX = map.DiscoveredRooms.Keys.Min(k => k.Item1);
-            var maxX = map.DiscoveredRooms.Keys.Max(k => k.Item1);
-            var minY = map.DiscoveredRooms.Keys.Min(k => k.Item2);
-            var maxY = map.DiscoveredRooms.Keys.Max(k => k.Item2);
+            var minX = map.DiscoveredRooms.Keys.Min(point => point.X);
+            var maxX = map.DiscoveredRooms.Keys.Max(point => point.X);
+            var minY = map.DiscoveredRooms.Keys.Min(point => point.Y);
+            var maxY = map.DiscoveredRooms.Keys.Max(point => point.Y);
             WriteLine();
+
             for (int y = maxY; y >= minY; y--)
             {
                 for (int x = minX; x <= maxX; x++)
                 {
-                    if (map.DiscoveredRooms.TryGetValue((x, y), out Room room))
+                    var currentPoint = new Point(x, y);
+
+                    if (map.DiscoveredRooms.TryGetValue(currentPoint, out Room room))
                     {
-                        if (player.CurrentX == x && player.CurrentY == y)
+                        if (player.Coordinates != null && player.Coordinates.Equals(currentPoint))
                         {
                             ConsoleHelper.PrintColored("P", ConsoleColor.Yellow, false); // Player's current position
                         }
@@ -32,10 +35,10 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
                     {
                         Write(" "); // Undiscovered room
                     }
-                    // Draw horizontal connections
-                    if (x < maxX && map.DiscoveredRooms.TryGetValue((x, y), out Room currentRoom) && currentRoom.Exits.ContainsKey("east"))
-                    {
 
+                    // Draw horizontal connections
+                    if (x < maxX && map.DiscoveredRooms.TryGetValue(currentPoint, out Room currentRoom) && currentRoom.Exits.ContainsKey(Direction.East))
+                    {
                         ConsoleHelper.PrintColored("-", ConsoleColor.Green, false);
                     }
                     else
@@ -44,12 +47,14 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
                     }
                 }
                 WriteLine();
+
                 // Draw vertical connections
                 if (y > minY)
                 {
                     for (int x = minX; x <= maxX; x++)
                     {
-                        if (map.DiscoveredRooms.TryGetValue((x, y), out Room room) && room.Exits.ContainsKey("south"))
+                        var currentPoint = new Point(x, y);
+                        if (map.DiscoveredRooms.TryGetValue(currentPoint, out Room room) && room.Exits.ContainsKey(Direction.South))
                         {
                             ConsoleHelper.PrintColored("|", ConsoleColor.Green, false);
                         }
@@ -89,7 +94,6 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
                 { "Level", (player.Level, ConsoleColor.White) },
                 { "Experience", (player.Experience, ConsoleColor.DarkCyan) }
             };
-
             foreach (var stat in stats)
             {
                 ConsoleHelper.PrintColored($"{stat.Key}: ", ConsoleColor.Cyan, false);
@@ -152,7 +156,6 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.View
             WriteLine(header);
             WriteLine(new string('-', header.Length)); // Separator line
             ResetColor();
-
             foreach (var item in player.Inventory)
             {
                 if (item is HealthPotion potion)

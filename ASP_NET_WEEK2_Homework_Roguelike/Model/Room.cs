@@ -2,20 +2,28 @@
 {
     public class Room
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        public Point Coordinates { get; set; }
         public string EventStatus { get; set; }
-        public Dictionary<string, Room> Exits { get; set; }
+        public Dictionary<Direction, Room> Exits { get; set; }
         public bool IsExplored { get; set; }
-        public Room(int x, int y)
+
+        public Room(int x, int y): this(new Point(x, y))
         {
-            X = x;
-            Y = y;
-            Exits = new Dictionary<string, Room>();
+        }
+        public Room(Point coordinates)
+        {
+            Coordinates = coordinates ?? throw new ArgumentNullException(nameof(coordinates));
+            Exits = new Dictionary<Direction, Room>();
             IsExplored = false;
             EventStatus = "none";
         }
-        //For serialization
-        public Room() { }
+        // Default constructor for serialization
+        public Room()
+        {
+            Coordinates = new Point(0, 0); // default to (0,0)
+            Exits = new Dictionary<Direction, Room>();
+            IsExplored = false;
+            EventStatus = "none";
+        }
     }
 }

@@ -5,7 +5,7 @@ using ASP_NET_WEEK3_Homework_Roguelike.Services;
 
 namespace ASP_NET_WEEK3_Homework_Roguelike.Controller
 {
-    public class PlayerCharacterController: IPlayerCharacterController
+    public class PlayerCharacterController : IPlayerCharacterController
     {
         private readonly PlayerCharacter _playerCharacter;
         private readonly PlayerCharacterView _view;
@@ -19,7 +19,7 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Controller
             _map = map ?? throw new ArgumentNullException(nameof(map));
             _mapService = mapService ?? throw new ArgumentNullException(nameof(mapService));
             _view = new PlayerCharacterView();
-            _playerCharacter.CurrentMap = map; // synchronizes map with the player
+            _playerCharacter.CurrentMap = map;
         }
         public void ShowCharacterStats()
         {
@@ -30,28 +30,33 @@ namespace ASP_NET_WEEK3_Homework_Roguelike.Controller
         {
             _view.ShowMap(_map, _playerCharacter);
         }
-        public void MovePlayer(string direction)
+        public void MovePlayer(string directionInput)
         {
-            if (string.IsNullOrWhiteSpace(direction))
+            if (string.IsNullOrWhiteSpace(directionInput))
             {
                 _view.ShowError("Direction cannot be empty.");
                 return;
             }
+            if (!Enum.TryParse<Direction>(directionInput, true, out Direction direction))
+            {
+                _view.ShowError("Invalid direction input.");
+                return;
+            }
             try
             {
-                int currentX = _playerCharacter.CurrentX;
-                int currentY = _playerCharacter.CurrentY;
-                Room currentRoom = _mapService.GetDiscoveredRoom(_map, currentX, currentY);
-                if (currentRoom != null && currentRoom.Exits.ContainsKey(direction.ToLower()))
+                var currentCoordinates = _playerCharacter.Coordinates;
+                var currentRoom = _mapService.GetDiscoveredRoom(_map, currentCoordinates);
+
+                if (currentRoom != null && currentRoom.Exits.ContainsKey(direction))
                 {
-                    _mapService.MovePlayer(_map, ref currentX, ref currentY, direction.ToLower());
-                    _playerCharacter.CurrentX = currentX;
-                    _playerCharacter.CurrentY = currentY;
-                    _view.ShowPlayerMovement(direction, _playerCharacter.CurrentX, _playerCharacter.CurrentY);
-                    Room newRoom = _mapService.GetDiscoveredRoom(_map, currentX, currentY);
+                    _mapService.MovePlayer(_map, ref currentCoordinates, direction);
+                    _playerCharacter.Coordinates = currentCoordinates;
+                    _view.ShowPlayerMovement(direction.ToString(), currentCoordinates.X, currentCoordinates.Y);
+
+                    var newRoom = _mapService.GetDiscoveredRoom(_map, currentCoordinates);
                     if (newRoom?.EventStatus != "none")
                     {
-                        RandomEvent roomEvent = EventGenerator.GenerateEvent(newRoom.EventStatus);
+                        var roomEvent = EventGenerator.GenerateEvent(newRoom.EventStatus);
                         roomEvent?.Execute(_playerCharacter, newRoom, this);
                     }
                 }
